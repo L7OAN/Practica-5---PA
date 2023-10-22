@@ -9,11 +9,16 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using MySql.Data.MySqlClient; // Referencia necesaria para trabajar con localhost y xampp
 
 namespace Practica_5___PA
 {
     public partial class Form1 : Form
     {
+        //Datos de conexion a MySQL (XAMPP)
+        string conexionSQL = "Server=localhost;Port=3306;Database=formulariodatos_pa;Uid=root;Pwd=;";
+        //Metodo de para insertar registros
+
         public Form1()
         {
             InitializeComponent();
@@ -24,6 +29,31 @@ namespace Practica_5___PA
             tbTelefono.TextChanged += ValidarTelefono;
             tbNombres.TextChanged += ValidarNombres;
             tbApellidos.TextChanged += ValidarApellidos;
+        }
+
+        private void InsertarRegistro(string nombre, string apellidos, int edad, decimal estatura, string telefono, string genero)
+        {
+            using (MySqlConnection conection = new MySqlConnection(conexionSQL))
+            {
+                conection.Open();//Apertura de comunicacion con la BD
+
+                string insertQuery = "INSERT INTO registros (Nombre, Apellido, Edad, Estatura, Telefono, Genero) " +
+                                    "VALUES (@Nombre, @Apelldio, @Edad, @Estatura, @Telefono, @Genero)";
+
+                using (MySqlCommand command = new MySqlCommand(insertQuery, conection))
+                {
+                    command.Parameters.AddWithValue("@Nombre", nombre);
+                    command.Parameters.AddWithValue("@Apellidos", apellidos);
+                    command.Parameters.AddWithValue("@Edad", edad);
+                    command.Parameters.AddWithValue("@Estatura", estatura);
+                    command.Parameters.AddWithValue("@Telefono", telefono);
+                    command.Parameters.AddWithValue("@Genero", genero);
+
+                    command.ExecuteNonQuery();
+
+                }
+                conection.Close();
+            }
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)
@@ -69,9 +99,18 @@ namespace Practica_5___PA
                         {
                             //Si el archivo existe, añadir un separador antes del nuevo registro
                             writer.WriteLine(datos);
+                            //Programacion de funcionalidad de insert SQL
+                            InsertarRegistro(nombres, apellidos, int.Parse(edad), decimal.Parse(estatura), telefono, genero);
+                            MessageBox.Show("Datos ingresados correctamente.");
                         }
+                        else
+                        {
 
-                        writer.WriteLine(datos);
+                            writer.WriteLine(datos);
+                            //Programacion de funcionalidad de insert SQL
+                            InsertarRegistro(nombres, apellidos, int.Parse(edad), decimal.Parse(estatura), telefono, genero);
+                            MessageBox.Show("Datos ingresados correctamente.");
+                        }
                     }
                 }
 
@@ -96,10 +135,18 @@ namespace Practica_5___PA
             return decimal.TryParse(valor, out resultado);
         }
 
-        private bool EsEnteroValidoDe10Digitos(string valor)
+        private bool EsEnteroValidoDe10Digitos(string input)
         {
-            long resultado;
-            return long.TryParse(valor, out resultado) && valor.Length == 10;
+            if (input.Length != 10)
+            {
+                return false;
+            }
+
+            if (!input.All(char.IsDigit))
+            {
+                return false;
+            }
+            return true;
         }
 
         private bool EsTextoValido(string valor)
